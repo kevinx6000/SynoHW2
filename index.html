@@ -3,11 +3,31 @@
 
 	<head>
 		<title>Slide show</title>
+		<link rel="stylesheet" type="text/css" href="slideShow.css">
+		<script src="slideShow.js"></script>
 	</head>
 
 	<body>
-		<!-- Symobolic hello world -->
-		<p align="center">hello, world</p>
+
+		<!-- Display area -->
+		<div id="display"></div>
+
+		<!-- Slide show -->
+		<script>
+			var s = new Slide({
+				id: "display",
+				items: [
+					"img/01.jpg",
+					"img/test.gif",
+					"img/02.jpg",
+					"img/03.jpg",
+					"img/04.jpg",
+					"img/05.jpg",
+					"img/06.jpg"]
+			});
+			s.start();
+		</script>
+
 	</body>
 
 </html>
