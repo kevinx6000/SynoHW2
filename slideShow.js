@@ -5,6 +5,7 @@ function Slide(para) {
 	this.id = para.id;
 	this.items = para.items;
 	this.curImgID = 0;
+	this.timer = undefined;
 
 	// Start
 	this.start = function() {
@@ -92,6 +93,7 @@ function Slide(para) {
 		var i = 0;
 		var curImgB = {};
 		var maxLen = this.items.length;
+		var that = this;
 
 		// Hide current image block
 		curImgB = document.getElementById("slideImgB" + this.curImgID);
@@ -105,6 +107,18 @@ function Slide(para) {
 		// Show current image block
 		curImgB = document.getElementById("slideImgB" + this.curImgID);
 		curImgB.style = "display: block;";
+		
+		// Adjust image size
+		this.adjustImageSize(this.curImgID);
+
+		// Destroy timer if defined
+		if (this.timer != undefined) {
+			clearTimeout(this.timer);
+			this.timer = undefined;
+		}
+
+		// Start timer again
+		this.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
 	}
 
 	// Bind events
@@ -116,7 +130,9 @@ function Slide(para) {
 
 			// Turn on and adjust image size
 			that.changeImage(0);
-			that.adjustImageSize(that.curImgID);
+
+			// Start first timer
+			that.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
 		}
 
 		// onresize event for window
@@ -127,11 +143,9 @@ function Slide(para) {
 		// Bind prev/next buttons
 		document.getElementById("slideBtnPrev").onclick = function() {
 			that.changeImage(-1);
-			that.adjustImageSize(that.curImgID);
 		}
 		document.getElementById("slideBtnNext").onclick = function() {
 			that.changeImage(+1);
-			that.adjustImageSize(that.curImgID);
 		}
 	}
 
