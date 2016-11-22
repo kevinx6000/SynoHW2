@@ -6,6 +6,7 @@ function Slide(para) {
 	this.items = para.items;
 	this.curImgID = 0;
 	this.timer = undefined;
+	this.navbarList = [];
 
 	// Start
 	this.start = function() {
@@ -21,6 +22,9 @@ function Slide(para) {
 
 		// Create button
 		output += this.createButton();
+
+		// Create navbar
+		output += this.createNavbar();
 
 		// Apply content
 		display.className = "slideShow main";
@@ -67,8 +71,7 @@ function Slide(para) {
 		output += ">";
 		output += "<img";
 		output += " src=\"img/left.png\"";
-		output += " width=\"100%\"";
-		output += " height=\"100%\"";
+		output += " style=\"width:100%;height:100%;\"";
 		output += ">";
 		output += "</div>";
 
@@ -80,9 +83,60 @@ function Slide(para) {
 		output += ">";
 		output += "<img";
 		output += " src=\"img/right.png\"";
-		output += " width=\"100%\"";
-		output += " height=\"100%\"";
+		output += " style=\"width:100%;height:100%;\"";
 		output += ">";
+		output += "</div>";
+
+		return output;
+	}
+
+	// Create navbar
+	this.createNavbar = function() {
+		var i = 0;
+		var output = "";
+		var mod = 0;
+		var nxtID = 0;
+
+		output += "<div";
+		output += " class=\"slideShow navbar\"";
+		output += ">";
+
+		// Calculate image ordering
+		this.navbarList.push(this.curImgID);
+		for (i = 1; i < this.items.length; i++) {
+			mod = i % 2;
+			if (mod > 0) {
+				nxtID = this.curImgID + (i + 1) / 2;
+				if (nxtID >= this.items.length) {
+					nxtID -= this.items.length;
+				}
+				this.navbarList.push(nxtID);
+			} else {
+				nxtID = this.curImgID - i / 2;
+				if (nxtID < 0) {
+					nxtID += this.items.length;
+				}
+				this.navbarList.unshift(nxtID);
+			}
+		}
+
+		// Create a list of image box
+		for (i = 0; i < this.navbarList.length; i++) {
+			output += "<div";
+			output += " id=\"navbox" + this.navbarList[i] + "\"";
+			output += " class=\"slideShow navbox\"";
+			output += ">";
+
+			// Images
+			output += "<img";
+			output += " src=\"" + this.items[this.navbarList[i]] + "\"";
+			output += " id=\"navimg" + this.navbarList[i] + "\"";
+			output += " class=\"slideShow\"";
+			output += ">";
+
+			output += "</div>";
+		}
+
 		output += "</div>";
 
 		return output;
@@ -111,14 +165,15 @@ function Slide(para) {
 		// Adjust image size
 		this.adjustImageSize(this.curImgID);
 
+		// TODO: adjust navbar position
+
 		// Destroy timer if defined
 		if (this.timer != undefined) {
 			clearTimeout(this.timer);
-			this.timer = undefined;
-		}
 
-		// Start timer again
-		this.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
+			// Start timer again
+			this.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
+		}
 	}
 
 	// Bind events
@@ -133,11 +188,17 @@ function Slide(para) {
 
 			// Start first timer
 			that.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
+
+			// Adjust navbar size (and position)
+			that.adjustNavbarSize();
+
+			// TODO: adjust navbar position
 		}
 
 		// onresize event for window
 		window.onresize = function() {
 			that.adjustImageSize(that.curImgID);
+			that.adjustNavbarSize();
 		}
 
 		// Bind prev/next buttons
@@ -153,34 +214,61 @@ function Slide(para) {
 	this.adjustImageSize = function(imgID) {
 		var imgBlk = {};
 		var imgSrc = {};
-		var bW = 0, bH = 0, iW = 0, iH = 0;
+
+		// Image block and image source
+		imgBlk = document.getElementById("slideImgB" + imgID);
+		imgSrc = document.getElementById("slideImg" + imgID);
+
+		// Adjust image source to fit image block
+		this.adjustToParent(imgSrc, imgBlk);
+	}
+
+	// Adjust navbar
+	this.adjustNavbarSize = function() {
+		var i = 0;
+		var navImg = {};
+		var navBox = {};
+
+		// Adjust navbox size
+		for (i = 0; i < this.navbarList.length; i++) {
+			navBox = document.getElementById("navbox" + this.navbarList[i]);
+			navBox.style = "display: block;";
+			navBox.style.width = navBox.clientHeight + "px";
+
+			// Adjust image to fit navbox
+			navImg = document.getElementById("navimg" + this.navbarList[i]);
+			this.adjustToParent(navImg, navBox);
+		}
+	}
+
+	// Adjust child element to fit parent element
+	this.adjustToParent = function(chd, par) {
+		var pW = 0, pH = 0, cW = 0, cH = 0;
 		var gap = 0;
 
-		// Retrieve image block
-		imgBlk = document.getElementById("slideImgB" + imgID);
-		bW = imgBlk.clientWidth;
-		bH = imgBlk.clientHeight;
-
-		// Retrieve image itself
-		imgSrc = document.getElementById("slideImg" + imgID);
-		iW = imgSrc.clientWidth;
-		iH = imgSrc.clientHeight;
+		// Retrieve width and height
+		pW = par.clientWidth;
+		pH = par.clientHeight;
+		cW = chd.clientWidth;
+		cH = chd.clientHeight;
 
 		// Dominated by width
-		if (bW/bH < iW/iH) {
-			imgSrc.style.width = bW + "px";
-			imgSrc.style.height = "auto";
+		if (pW/pH < cW/cH) {
+			chd.style.width = pW + "px";
+			chd.style.height = "auto";
 
 			// fix vertical center
-			iH = imgSrc.clientHeight;
-			gap = (bH - iH) / 2.0;
-			imgSrc.style.top = gap + "px";
+			cH = chd.clientHeight;
+			gap = (pH - cH) / 2.0;
+			chd.style.top = gap + "px";
 
 		// Dominated by height
 		} else {
-			imgSrc.style.height = bH + "px";
-			imgSrc.style.width = "auto";
-			imgSrc.style.top = "0px";
+			chd.style.height = pH + "px";
+			chd.style.width = "auto";
+
+			// Reset top gap
+			chd.style.top = "0px";
 		}
 	}
 }
