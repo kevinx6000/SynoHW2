@@ -6,57 +6,55 @@ function Slide(para) {
 	this.items = para.items;
 	this.curImgID = 0;
 
-	// Start slide show
+	// Start
 	this.start = function() {
-		var diplay = {};
+		var display = {};
 		var output = "";
 		var that = this;
 
 		// Get display area
 		display = document.getElementById(this.id);
 
-		// Create image blocks
+		// Create image block
 		output += this.createImageBlock();
 
-		// Create prev/next buttons
+		// Create button
 		output += this.createButton();
-		
-		// Apply slide show
+
+		// Apply content
 		display.className = "slideShow main";
 		display.innerHTML = output;
 
-		// Turn the first image on
-		this.changeImage(0);
+		// Bind events
+		this.bindEvent();
+	}
 
-		// Bind change function to buttons
-		document.getElementById("slideBtnPrev").onclick = function() {
-			that.changeImage(-1);
-		}
-		document.getElementById("slideBtnNext").onclick = function() {
-			that.changeImage(+1);
-		}
-	};
-
-	// Create image blocks
+	// Create image block
 	this.createImageBlock = function() {
 		var i = 0;
 		var output = "";
 
 		// For each image
-		for(i = 0; i < this.items.length; i++) {
-
-			// Image source
-			output += "<img";
-			output += " src=\"" + this.items[i] + "\"";
-			output += " id=\"slidePic" + i + "\"";
+		for (i = 0; i < this.items.length; i++) {
+			output += "<div";
+			output += " id=\"slideImgB" + i + "\"";
 			output += " class=\"slideShow image\"";
 			output += ">";
+
+			// Image
+			output += "<img";
+			output += " src=\"" + this.items[i] + "\"";
+			output += " id=\"slideImg" + i + "\"";
+			output += " class=\"slideShow\"";
+			output += ">";
+
+			output += "</div>";
 		}
 
 		return output;
 	}
 
-	// Create prev/next button
+	// Create button
 	this.createButton = function() {
 		var output = "";
 
@@ -64,7 +62,7 @@ function Slide(para) {
 		output += "<div";
 		output += " id=\"slideBtnPrev\"";
 		output += " class=\"slideShow button\"";
-		output += " style=\"left: 5%\"";
+		output += " style=\"left: 1%\"";
 		output += ">";
 		output += "<img";
 		output += " src=\"img/left.png\"";
@@ -77,7 +75,7 @@ function Slide(para) {
 		output += "<div";
 		output += " id=\"slideBtnNext\"";
 		output += " class=\"slideShow button\"";
-		output += " style=\"right: 5%\"";
+		output += " style=\"right: 1%\"";
 		output += ">";
 		output += "<img";
 		output += " src=\"img/right.png\"";
@@ -88,33 +86,87 @@ function Slide(para) {
 
 		return output;
 	}
-
+	
 	// Change image
 	this.changeImage = function(shift) {
 		var i = 0;
-		var curImg = {};
+		var curImgB = {};
 		var maxLen = this.items.length;
 
-		// Hide current image
-		curImg = document.getElementById("slidePic" + this.curImgID);
-		curImg.style = "display: none;";
+		// Hide current image block
+		curImgB = document.getElementById("slideImgB" + this.curImgID);
+		curImgB.style = "display: none;";
 
 		// Update current image ID
 		this.curImgID += shift;
 		if (this.curImgID < 0) this.curImgID += maxLen;
 		if (this.curImgID >= maxLen) this.curImgID -= maxLen;
 
-		// Show current image
-		curImg = document.getElementById("slidePic" + this.curImgID);
-		curImg.style = "display: block;";
+		// Show current image block
+		curImgB = document.getElementById("slideImgB" + this.curImgID);
+		curImgB.style = "display: block;";
+	}
 
-		// Fit width and height
-		if (curImg.height > curImg.width) {
-			curImg.style.height = "100%";
-			curImg.style.width = "auto";
+	// Bind events
+	this.bindEvent = function() {
+		var that = this;
+
+		// onload event for the whole document
+		window.onload = function() {
+
+			// Turn on and adjust image size
+			that.changeImage(0);
+			that.adjustImageSize(that.curImgID);
+		}
+
+		// onresize event for window
+		window.onresize = function() {
+			that.adjustImageSize(that.curImgID);
+		}
+
+		// Bind prev/next buttons
+		document.getElementById("slideBtnPrev").onclick = function() {
+			that.changeImage(-1);
+			that.adjustImageSize(that.curImgID);
+		}
+		document.getElementById("slideBtnNext").onclick = function() {
+			that.changeImage(+1);
+			that.adjustImageSize(that.curImgID);
+		}
+	}
+
+	// Adjust image size
+	this.adjustImageSize = function(imgID) {
+		var imgBlk = {};
+		var imgSrc = {};
+		var bW = 0, bH = 0, iW = 0, iH = 0;
+		var gap = 0;
+
+		// Retrieve image block
+		imgBlk = document.getElementById("slideImgB" + imgID);
+		bW = imgBlk.clientWidth;
+		bH = imgBlk.clientHeight;
+
+		// Retrieve image itself
+		imgSrc = document.getElementById("slideImg" + imgID);
+		iW = imgSrc.clientWidth;
+		iH = imgSrc.clientHeight;
+
+		// Dominated by width
+		if (bW/bH < iW/iH) {
+			imgSrc.style.width = bW + "px";
+			imgSrc.style.height = "auto";
+
+			// fix vertical center
+			iH = imgSrc.clientHeight;
+			gap = (bH - iH) / 2.0;
+			imgSrc.style.top = gap + "px";
+
+		// Dominated by height
 		} else {
-			curImg.style.width = "100%";
-			curImg.style.height = "auto";
+			imgSrc.style.height = bH + "px";
+			imgSrc.style.width = "auto";
+			imgSrc.style.top = "0px";
 		}
 	}
 }
