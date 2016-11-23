@@ -7,6 +7,10 @@ function Slide(para) {
 	this.curImgID = 0;
 	this.timer = undefined;
 
+	// Private member
+	var navOldPos = [];
+	var navCurPos = [];
+
 	// Start
 	this.start = function() {
 		var display = {};
@@ -145,7 +149,7 @@ function Slide(para) {
 		this.adjustImageSize(this.curImgID);
 
 		// Adjust navbar position
-		this.adjustNavbarPosition();
+		this.adjustNavbarPosition(false);
 
 		// Destroy timer if defined
 		if (this.timer != undefined) {
@@ -177,7 +181,7 @@ function Slide(para) {
 		window.onresize = function() {
 			that.adjustImageSize(that.curImgID);
 			that.adjustNavbarSize();
-			that.adjustNavbarPosition();
+			that.adjustNavbarPosition(true);
 		}
 
 		// Bind prev/next buttons
@@ -220,13 +224,15 @@ function Slide(para) {
 	}
 
 	// Adjust navbar position
-	this.adjustNavbarPosition = function() {
+	this.adjustNavbarPosition = function(isDirect) {
 		var i = 0;
 		var navbar = {};
 		var navbox = {};
 		var barW = 0, barH = 0, boxS = 0, gap = 0;
-		var leftCnt = 0, shift = 0;
+		var leftCnt = 0, shift = 0, mid;
 		var output = "";
+		var that = this;
+		var tmpObj, tmpOld, tmpCur;
 
 		// Get size of navbar
 		navbar = document.getElementById("navbar");
@@ -243,21 +249,55 @@ function Slide(para) {
 		// Calculate count of navboxes on the left/right side
 		leftCnt = parseInt((this.items.length - 1) / 2);
 
-		// Adjust position of navboxes
+		// Clone current positions to old positions
+		navOldPos = navCurPos.slice();
+
+		// Calculate new positions
+		mid = (barW - boxS) / 2;
 		for (i = 0; i < leftCnt; i++) {
 			curID = (this.curImgID - leftCnt + i + this.items.length) % this.items.length;
-			shift = (barW - boxS) / 2 - (leftCnt - i) * (boxS + gap);
-			navbox = document.getElementById("navbox" + curID);
-			navbox.style.left = shift + "px";
-			navbox.style.opacity = "0.3";
+			shift = mid - (leftCnt - i) * (boxS + gap);
+			navCurPos[curID] = shift;
 		}
 		for (i = 0; i < this.items.length - leftCnt; i++) {
 			curID = (this.curImgID + i) % this.items.length;
-			shift = (barW - boxS) / 2 + i * (boxS + gap);
-			navbox = document.getElementById("navbox" + curID);
-			navbox.style = "left: " + shift + "px;";
-			if (i != 0) {
-				navbox.style.opacity = "0.3";
+			shift = mid + i * (boxS + gap);
+			navCurPos[curID] = shift;
+		}
+
+		// Apply to navboxes
+		for (i = 0; i < this.items.length; i++) {
+			navbox = document.getElementById("navbox" + i);
+			navbox.style.opacity = ((i == this.curImgID) ? "1" : "0.3");
+
+			// First time or specified, update positions directly
+			if (navOldPos[i] == undefined || isDirect) {
+				navbox.style.left = navCurPos[i] + "px";
+			} else {
+
+				// Animation for middle boxes
+				if ((mid - navOldPos[i]) * (mid - navCurPos[i]) >= 0.0) {
+					this.shiftAnimation(navbox, navOldPos[i], navCurPos[i], 300);
+
+				// Animation for endpoint boxes
+				} else {
+					tmpObj = navbox;
+					tmpOld = navOldPos[i];
+					tmpCur = navCurPos[i];
+
+					// To left
+					if (navCurPos[i] > navOldPos[i]) {
+						this.shiftAnimation(navbox, navOldPos[i], navOldPos[i] - boxS / 2, 150, function(){
+							that.shiftAnimation(tmpObj, tmpCur + boxS / 2, tmpCur, 150);
+						});
+
+					// To right
+					} else {
+						this.shiftAnimation(navbox, navOldPos[i], navOldPos[i] + boxS / 2, 150, function(){
+							that.shiftAnimation(tmpObj, tmpCur - boxS / 2, tmpCur, 150);
+						});
+					}
+				}
 			}
 		}
 	}
@@ -290,6 +330,37 @@ function Slide(para) {
 
 			// Reset top gap
 			chd.style.top = "0px";
+		}
+	}
+
+	// Animation of changing positions with shifting
+	this.shiftAnimation = function(obj, oldPos, newPos, msec, func) {
+		var curPos = 0, shift = 0;
+		var timeID = undefined;
+
+		// Create animation
+		curPos = oldPos;
+		shift = (newPos - oldPos) / (msec / 20);
+		timeID = setInterval(animationHelp, 20);
+
+		// Animation help
+		function animationHelp() {
+			
+			// Reach new position
+			if (curPos == newPos) {
+				clearInterval(timeID);
+
+				// Call function if specified
+				if (func != undefined) {
+					func();
+				}
+			} else {
+				curPos += shift;
+				if ((curPos - oldPos) * (curPos - newPos) >= 0) {
+					curPos = newPos;
+				}
+				obj.style.left = curPos + "px";
+			}
 		}
 	}
 }
