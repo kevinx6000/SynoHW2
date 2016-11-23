@@ -163,8 +163,10 @@ function Slide(para) {
 	// Bind events
 	this.bindEvent = function() {
 		var that = this;
+		var i = 0;
+		var obj;
 
-		// onload event for the whole document
+		// Bind onload event for the whole document
 		window.onload = function() {
 
 			// Adjust navbar size
@@ -177,19 +179,43 @@ function Slide(para) {
 			that.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
 		}
 
-		// onresize event for window
+		// Bind onresize event for window
 		window.onresize = function() {
 			that.adjustImageSize(that.curImgID);
 			that.adjustNavbarSize();
 			that.adjustNavbarPosition(true);
 		}
 
-		// Bind prev/next buttons
+		// Bind onlick event for prev/next buttons
 		document.getElementById("slideBtnPrev").onclick = function() {
 			that.changeImage(-1);
 		}
 		document.getElementById("slideBtnNext").onclick = function() {
 			that.changeImage(+1);
+		}
+
+		// For each navbox
+		for (i = 0; i < this.items.length; i++) {
+			obj = document.getElementById("navbox" + i);
+
+			// onclick
+			obj.onclick = function(id) {
+				return function() {
+					that.changeImage(id - that.curImgID);
+				}
+			}(i);
+
+			// Hover effect
+			obj.onmouseover = function() {
+				this.style.opacity = "1";
+			}
+			obj.onmouseout = function(id) {
+				return function() {
+					if (id != that.curImgID) {
+						this.style.opacity = "0.3";
+					}
+				}
+			}(i);
 		}
 	}
 
@@ -232,7 +258,6 @@ function Slide(para) {
 		var leftCnt = 0, shift = 0, mid;
 		var output = "";
 		var that = this;
-		var tmpObj, tmpOld, tmpCur;
 
 		// Get size of navbar
 		navbar = document.getElementById("navbar");
@@ -266,6 +291,7 @@ function Slide(para) {
 		}
 
 		// Apply to navboxes
+		shift = navCurPos[this.curImgID] - navOldPos[this.curImgID];
 		for (i = 0; i < this.items.length; i++) {
 			navbox = document.getElementById("navbox" + i);
 			navbox.style.opacity = ((i == this.curImgID) ? "1" : "0.3");
@@ -276,27 +302,21 @@ function Slide(para) {
 			} else {
 
 				// Animation for middle boxes
-				if ((mid - navOldPos[i]) * (mid - navCurPos[i]) >= 0.0) {
+				if ((navCurPos[this.curImgID] - navOldPos[this.curImgID]) * 
+					(navCurPos[i] - navOldPos[i]) >= 0) {
 					this.shiftAnimation(navbox, navOldPos[i], navCurPos[i], 300);
 
 				// Animation for endpoint boxes
 				} else {
-					tmpObj = navbox;
-					tmpOld = navOldPos[i];
-					tmpCur = navCurPos[i];
 
-					// To left
-					if (navCurPos[i] > navOldPos[i]) {
-						this.shiftAnimation(navbox, navOldPos[i], navOldPos[i] - boxS / 2, 150, function(){
-							that.shiftAnimation(tmpObj, tmpCur + boxS / 2, tmpCur, 150);
-						});
-
-					// To right
-					} else {
-						this.shiftAnimation(navbox, navOldPos[i], navOldPos[i] + boxS / 2, 150, function(){
-							that.shiftAnimation(tmpObj, tmpCur - boxS / 2, tmpCur, 150);
-						});
-					}
+					// Shift left: go left and appear at right
+					// Shift right: go right and appear at left
+					// Hint: no matter which direction, it's the same way as middle navbox
+					this.shiftAnimation(navbox, navOldPos[i], navOldPos[i] + shift, 150, function(obj, id) {
+						return function() {
+							that.shiftAnimation(obj, navCurPos[id] - shift, navCurPos[id], 150);
+						}
+					}(navbox, i));
 				}
 			}
 		}
