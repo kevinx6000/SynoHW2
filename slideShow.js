@@ -134,7 +134,7 @@ function Slide(para) {
 
 		// Hide current image block
 		curImgB = document.getElementById("slideImgB" + this.curImgID);
-		curImgB.style = "display: none;";
+		curImgB.style.display = "none";
 
 		// Update current image ID
 		this.curImgID += shift;
@@ -143,7 +143,7 @@ function Slide(para) {
 
 		// Show current image block
 		curImgB = document.getElementById("slideImgB" + this.curImgID);
-		curImgB.style = "display: block;";
+		curImgB.style.display = "block";
 		
 		// Adjust image size
 		this.adjustImageSize(this.curImgID);
