@@ -6,7 +6,6 @@ function Slide(para) {
 	this.items = para.items;
 	this.curImgID = 0;
 	this.timer = undefined;
-	this.navbarList = [];
 
 	// Start
 	this.start = function() {
@@ -94,43 +93,23 @@ function Slide(para) {
 	this.createNavbar = function() {
 		var i = 0;
 		var output = "";
-		var mod = 0;
-		var nxtID = 0;
 
 		output += "<div";
+		output += " id=\"navbar\"";
 		output += " class=\"slideShow navbar\"";
 		output += ">";
 
-		// Calculate image ordering
-		this.navbarList.push(this.curImgID);
-		for (i = 1; i < this.items.length; i++) {
-			mod = i % 2;
-			if (mod > 0) {
-				nxtID = this.curImgID + (i + 1) / 2;
-				if (nxtID >= this.items.length) {
-					nxtID -= this.items.length;
-				}
-				this.navbarList.push(nxtID);
-			} else {
-				nxtID = this.curImgID - i / 2;
-				if (nxtID < 0) {
-					nxtID += this.items.length;
-				}
-				this.navbarList.unshift(nxtID);
-			}
-		}
-
 		// Create a list of image box
-		for (i = 0; i < this.navbarList.length; i++) {
+		for (i = 0; i < this.items.length; i++) {
 			output += "<div";
-			output += " id=\"navbox" + this.navbarList[i] + "\"";
+			output += " id=\"navbox" + i + "\"";
 			output += " class=\"slideShow navbox\"";
 			output += ">";
 
 			// Images
 			output += "<img";
-			output += " src=\"" + this.items[this.navbarList[i]] + "\"";
-			output += " id=\"navimg" + this.navbarList[i] + "\"";
+			output += " src=\"" + this.items[i] + "\"";
+			output += " id=\"navimg" + i + "\"";
 			output += " class=\"slideShow\"";
 			output += ">";
 
@@ -165,7 +144,8 @@ function Slide(para) {
 		// Adjust image size
 		this.adjustImageSize(this.curImgID);
 
-		// TODO: adjust navbar position
+		// Adjust navbar position
+		this.adjustNavbarPosition();
 
 		// Destroy timer if defined
 		if (this.timer != undefined) {
@@ -183,22 +163,21 @@ function Slide(para) {
 		// onload event for the whole document
 		window.onload = function() {
 
+			// Adjust navbar size
+			that.adjustNavbarSize();
+
 			// Turn on and adjust image size
 			that.changeImage(0);
 
 			// Start first timer
 			that.timer = window.setTimeout(function(){that.changeImage(+1);}, 3000);
-
-			// Adjust navbar size (and position)
-			that.adjustNavbarSize();
-
-			// TODO: adjust navbar position
 		}
 
 		// onresize event for window
 		window.onresize = function() {
 			that.adjustImageSize(that.curImgID);
 			that.adjustNavbarSize();
+			that.adjustNavbarPosition();
 		}
 
 		// Bind prev/next buttons
@@ -223,21 +202,63 @@ function Slide(para) {
 		this.adjustToParent(imgSrc, imgBlk);
 	}
 
-	// Adjust navbar
+	// Adjust navbar size
 	this.adjustNavbarSize = function() {
 		var i = 0;
 		var navImg = {};
 		var navBox = {};
 
 		// Adjust navbox size
-		for (i = 0; i < this.navbarList.length; i++) {
-			navBox = document.getElementById("navbox" + this.navbarList[i]);
-			navBox.style = "display: block;";
+		for (i = 0; i < this.items.length; i++) {
+			navBox = document.getElementById("navbox" + i);
 			navBox.style.width = navBox.clientHeight + "px";
 
 			// Adjust image to fit navbox
-			navImg = document.getElementById("navimg" + this.navbarList[i]);
+			navImg = document.getElementById("navimg" + i);
 			this.adjustToParent(navImg, navBox);
+		}
+	}
+
+	// Adjust navbar position
+	this.adjustNavbarPosition = function() {
+		var i = 0;
+		var navbar = {};
+		var navbox = {};
+		var barW = 0, barH = 0, boxS = 0, gap = 0;
+		var leftCnt = 0, shift = 0;
+		var output = "";
+
+		// Get size of navbar
+		navbar = document.getElementById("navbar");
+		barW = navbar.clientWidth;
+		barH = navbar.clientHeight;
+
+		// Get size of navbox (width == height)
+		navbox = document.getElementById("navbox" + this.curImgID);
+		boxS = navbox.clientWidth;
+
+		// Gap between navboxes
+		gap = barH - boxS;
+
+		// Calculate count of navboxes on the left/right side
+		leftCnt = parseInt((this.items.length - 1) / 2);
+
+		// Adjust position of navboxes
+		for (i = 0; i < leftCnt; i++) {
+			curID = (this.curImgID - leftCnt + i + this.items.length) % this.items.length;
+			shift = (barW - boxS) / 2 - (leftCnt - i) * (boxS + gap);
+			navbox = document.getElementById("navbox" + curID);
+			navbox.style.left = shift + "px";
+			navbox.style.opacity = "0.3";
+		}
+		for (i = 0; i < this.items.length - leftCnt; i++) {
+			curID = (this.curImgID + i) % this.items.length;
+			shift = (barW - boxS) / 2 + i * (boxS + gap);
+			navbox = document.getElementById("navbox" + curID);
+			navbox.style = "left: " + shift + "px;";
+			if (i != 0) {
+				navbox.style.opacity = "0.3";
+			}
 		}
 	}
 
