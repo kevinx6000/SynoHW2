@@ -70,4 +70,5 @@ div.slideShow.navbox {
 	top: 10%;
 	bottom: 10%;
 	height: 80%;
+	cursor: pointer;
 }
