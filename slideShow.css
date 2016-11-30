@@ -30,7 +30,7 @@ img.slideShow {
 	margin: auto;
 }
 
-/* Image animation (CSS3) */
+/* Animation: appear with fade (CSS3) */
 /* Safari 4.0-8.0 */
 @keyframes slideShow-fade {
 	from {opacity: 0;}
@@ -40,6 +40,17 @@ img.slideShow {
 @-webkit-keyframes slideShow-fade {
 	from {opacity: 0;}
 	to {opacity: 1;}
+}
+/* Animation: vanish with fade (CSS3) */
+/* Safari 4.0-8.0 */
+@keyframes slideShow-vanish {
+	from {opacity: 1;}
+	to {opacity: 0;}
+}
+/* Other */
+@-webkit-keyframes slideShow-vanish {
+	from {opacity: 1;}
+	to {opacity: 0;}
 }
 
 /* Buttons */
@@ -62,6 +73,14 @@ div.slideShow.navbar {
 	bottom: 5%;
 	height: 15%;
 	width: 100%;
+	animation-name: slideShow-vanish;
+	animation-duration: 1s;
+	opacity: 0;
+}
+div.slideShow.navbar:hover {
+	animation-name: slideShow-fade;
+	animation-duration: 1s;
+	opacity: 1;
 }
 
 /* Navbar image box */
